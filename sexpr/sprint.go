@@ -32,9 +32,6 @@ func IsExported(name string) bool {
 	return unicode.IsUpper(ch)
 }
 
-
-var indent = []byte("  ")
-
 // NotNilFilter returns true for field values that are not nil;
 // it returns false otherwise.
 func NotNilFilter(_ string, v reflect.Value) bool {
@@ -43,6 +40,18 @@ func NotNilFilter(_ string, v reflect.Value) bool {
 		return !v.IsNil()
 	}
 	return true
+}
+
+func isBadField(v reflect.Value) bool {
+	switch v.Interface().(type) {
+	case *ast.CommentGroup:
+		return true
+	case token.Pos:
+		return true
+
+	default:
+		return false
+	}
 }
 
 // printf is a convenience wrapper that takes care of print errors.
@@ -69,7 +78,7 @@ func (p *SPrinter) printf(format string, args ...interface{}) {
 // should catch those as well.
 
 func (p *SPrinter) Sprint(x reflect.Value) {
-	if !NotNilFilter("", x) {
+	if !ast.NotNilFilter("", x) {
 		p.printf("nil")
 		return
 	}
@@ -131,6 +140,9 @@ func (p *SPrinter) Sprint(x reflect.Value) {
 			// values cannot be accessed via reflection
 			if name := t.Field(i).Name; IsExported(name) {
 				value := x.Field(i)
+				if (isBadField(value)) {
+					continue
+				}
 				if first {
 					p.printf("\n")
 					first = false

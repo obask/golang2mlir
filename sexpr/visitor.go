@@ -7,6 +7,7 @@ import (
 	"go/token"
 )
 
+
 type PrintASTVisitor struct {}
 
 func (v *PrintASTVisitor) Visit(n ast.Node) ast.Visitor {
