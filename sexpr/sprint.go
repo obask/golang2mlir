@@ -42,7 +42,7 @@ func NotNilFilter(_ string, v reflect.Value) bool {
 	return true
 }
 
-func isBadField(v reflect.Value) bool {
+func IsBadField(v reflect.Value) bool {
 	switch v.Interface().(type) {
 	case *ast.CommentGroup:
 		return true
@@ -140,7 +140,7 @@ func (p *SPrinter) Sprint(x reflect.Value) {
 			// values cannot be accessed via reflection
 			if name := t.Field(i).Name; IsExported(name) {
 				value := x.Field(i)
-				if (isBadField(value)) {
+				if (IsBadField(value)) {
 					continue
 				}
 				if first {
@@ -167,12 +167,12 @@ func (p *SPrinter) Sprint(x reflect.Value) {
 			p.printf("%v", v)
 		case token.Token:
 			i2 := v.(token.Token)
-			if i2 <= token.STRING {
-				panic(i2)
-			} else if i2 <= token.COLON {
+			if i2.IsKeyword() {
+				p.printf("token.%s", strings.ToUpper(fmt.Sprint(v)))
+			} else if i2.IsOperator() {
 				p.printf("%d", v)
 			} else {
-				p.printf("token.%s", strings.ToUpper(fmt.Sprint(v)))
+				panic(i2)
 			}
 		default:
 			panic(reflect.TypeOf(v))

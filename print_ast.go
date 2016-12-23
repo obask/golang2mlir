@@ -11,12 +11,11 @@ import (
 
 func main() {
 
-	filePath := "/Users/oleg/IdeaProjects/untitled/print_ast.go"
-	fset := token.NewFileSet()
+	//filePath := "./print_ast.go"
+	filePath := "/Users/baskakov/IdeaProjects/homoiconic-go/assets/types.go"
 
-	code, err := parser.ParseFile(fset, filePath, nil, 0)
+	code, err := parser.ParseFile(token.NewFileSet(), filePath, nil, 0)
 	if err != nil {
-		println("Err")
 		panic(err)
 	}
 

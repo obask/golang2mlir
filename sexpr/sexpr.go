@@ -66,7 +66,7 @@ func (p *SExpr) Sprint(x reflect.Value) {
 		switch x.Interface().(type) {
 		case ast.Ident:
 			name := x.FieldByName("Name").String()
-			p.printf("(i %q)", name)
+			p.printf("%q", name)
 		case ast.BasicLit:
 			value := x.FieldByName("Value").String()
 			p.printf("(const %v)", value)
@@ -82,7 +82,7 @@ func (p *SExpr) Sprint(x reflect.Value) {
 				// values cannot be accessed via reflection
 				if name := t.Field(i).Name; IsExported(name) {
 					value := x.Field(i)
-					if (isBadField(value)) {
+					if (IsBadField(value)) {
 						continue
 					}
 					if first {
@@ -107,7 +107,7 @@ func (p *SExpr) Sprint(x reflect.Value) {
 		switch v.(type) {
 		case int:
 			p.printf("%d", v)
-		case token.Pos:
+		case token.Pos, bool:
 			p.printf("%v", v)
 		case token.Token:
 			i2 := v.(token.Token)

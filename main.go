@@ -9,9 +9,10 @@ import (
 	"go/scanner"
 	"go/token"
 	"io/ioutil"
+	"./sexpr"
+	"go/ast"
+	"reflect"
 )
-
-// %!v(PANIC=runtime error: invalid memory address or nil pointer dereference)
 
 func check(e error) {
 	if e != nil {
@@ -19,168 +20,10 @@ func check(e error) {
 	}
 }
 
-type ATree interface {
-	String() string
-}
-
-type ABranch struct {
-	ATree
-	val []ATree // denoted object; or nil
-}
-
-type ALeaf interface {
-	ATree
-}
-
-type ANumber struct {
-	ALeaf
-	val  string // denoted object; or nil
-	kind token.Token
-}
-
-type ASymbol struct {
-	ALeaf
-	val string // denoted object; or nil
-}
-
-type AString struct {
-	ALeaf
-	val string // denoted object; or nil
-}
-
-// String returns the string corresponding to the token tok.
-// For operators, delimiters, and keywords the string is the actual
-// token character sequence (e.g., for the token ADD, the string is
-// "+"). For all other tokens the string corresponds to the token
-// constant name (e.g. for the token IDENT, the string is "IDENT").
-//
-func (stmt ABranch) String() string {
-	res := "["
-	for _, x := range stmt.val {
-		res += x.String()
-		res += " "
-	}
-	res += "]"
-	return res
-}
-
-func (stmt ANumber) String() string {
-	return stmt.val
-}
-
-func (stmt ASymbol) String() string {
-	return stmt.val
-}
-
-func (stmt AString) String() string {
-	return stmt.val
-}
-
-func parseCode(lexer *scanner.Scanner, state []ATree) ATree {
-	_, tok, lit := lexer.Scan()
-	// skip endlines
-	for tok == token.SEMICOLON {
-		_, tok, lit = lexer.Scan()
-	}
-	switch tok {
-	case token.EOF:
-		fmt.Println("dbg: token.EOF")
-		return ABranch{val: state}
-
-	case token.LPAREN, token.LBRACK, token.LBRACE:
-		fmt.Println("dbg: token.LPAREN")
-		expr := parseCode(lexer, []ATree{})
-		return parseCode(lexer, append(state, expr))
-
-	case token.RPAREN, token.RBRACK, token.RBRACE:
-		fmt.Println("dbg: token.RPAREN")
-		return ABranch{val: state}
-
-	case token.INT, token.FLOAT:
-		fmt.Println("dbg: ANumber")
-		newElem := ANumber{val: lit, kind: tok}
-		return parseCode(lexer, append(state, newElem))
-
-	case token.STRING, token.CHAR, token.CONST:
-		fmt.Println("dbg: AString = " + lit)
-		newElem := AString{val: lit}
-		return parseCode(lexer, append(state, newElem))
-	}
-	switch {
-	case tok.IsOperator() || tok.IsKeyword():
-		// IsOperator has a bug with brackets and semicolon!!
-		fmt.Println("dbg: token.IsOperator = " + tok.String())
-		newElem := ASymbol{val: tok.String()}
-		return parseCode(lexer, append(state, newElem))
-
-	case tok == token.IDENT || tok ==  token.IF:
-		// IsOperator has a bug with brackets and semicolon!!
-		fmt.Println("dbg: token.IsOperator = " + lit)
-		newElem := ASymbol{val: lit}
-		return parseCode(lexer, append(state, newElem))
-
-	default:
-		// Unknown token
-		fmt.Println("dbg: default")
-		fmt.Printf("\t%s    ->  %q\n", tok, lit)
-		panic("SUCCESS default branch of parseCode")
-		return nil
-	}
-}
-
-//default:
-////                    System.out.println("L_ATOM");
-////                    System.out.println(state.getClass());
-//state.add(new AString(curr));
-//return reduceTree(tokens, state);
-//}
-//} else {
-//return new ABranch(state);
-//}
-
-func ParseFile(fset *token.FileSet, filename string) ATree {
-
-	fmt.Println("dbg 1")
-
-	// get source
-	text, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil
-	}
-
-	var lexer scanner.Scanner
-
-	fileSet := fset.AddFile(filename, -1, len(text))
-
-	errorHandler := func(pos token.Position, msg string) {
-		// FIXME this happened for ILLEGAL tokens, forex '?'
-		panic("SUCCESS in scanner errorHandler")
-	}
-
-	var m scanner.Mode
-	lexer.Init(fileSet, text, errorHandler, m)
-
-	fmt.Println("dbg 2.1")
-
-	// Repeated calls to Scan yield the token sequence found in the input.
-	//	for {
-	//		_, tok, lit := lexer.Scan()
-	//		if tok == token.EOF {
-	//			break
-	//		}
-	//		fmt.Printf("\t%s    %q\n", tok, lit)
-	//	}
-	//
-
-	fmt.Println("dbg 2.2")
-
-	return parseCode(&lexer, []ATree{})
-}
-
-func main() {
-	filename := "./resources/result.clj"
-	fset := token.NewFileSet()
-	tree := ParseFile(fset, filename)
+func main1() {
+	//filename := "./assets/code.clj"
+	filename := "/Users/baskakov/IdeaProjects/homoiconic-go/assets/types.go"
+	tree := sexpr.ParseFile(token.NewFileSet(), filename)
 
 	fmt.Println("dbg 3")
 
@@ -226,3 +69,79 @@ func main2() {
 	}
 
 }
+
+func filter(node sexpr.ANode) []sexpr.ANode {
+	println("filer")
+	fmt.Println("Name: ", node.Name())
+	fmt.Println("Children: ", node.Children())
+	child := node.Children()[1]
+	fmt.Println(child.Name())
+	return []sexpr.ANode{}
+}
+
+func _fake() {
+	ast.Print(nil, nil)
+	token.NewFileSet()
+}
+
+type Test struct {
+		       //Doc     *ast.CommentGroup // associated documentation; or nil
+	Names ast.Expr // value names (len(Names) > 0)
+		       //Type    ast.Expr          // value type; or nil
+		       //Values  []ast.Expr        // initial values; or nil
+		       //Comment *ast.CommentGroup // line comments; or nil
+}
+
+//type ValueSpec struct {
+//	Doc     *CommentGroup // associated documentation; or nil
+//	Names   []*Ident      // value names (len(Names) > 0)
+//	Type    Expr          // value type; or nil
+//	Values  []Expr        // initial values; or nil
+//	Comment *CommentGroup // line comments; or nil
+//}
+
+func createStruct(t reflect.Type, fields []reflect.Value) reflect.Value {
+	item := reflect.New(t).Elem()
+	pos := 0
+	n := t.NumField()
+	for i := 0; i < n; i++ {
+		// exclude non-exported fields because their
+		// values cannot be accessed via reflection
+		curr := item.Field(i)
+		if (!sexpr.IsBadField(curr)) {
+			curr.Set(fields[pos])
+			pos++
+		}
+	}
+	return item
+}
+
+func main() {
+	//filename := "/Users/baskakov/IdeaProjects/homoiconic-go/assets/code.clj"
+	//file := sexpr.ParseFile(token.NewFileSet(), filename)
+	//tree := file.(sexpr.ABranch).Val[0]
+	//filter(tree)
+
+	//fmt.Println(tree)
+	//ast.Print(token.NewFileSet(), tree)
+
+	//fmt.Println(tree)
+
+	//tree.(sexpr.ABranch)
+
+	idents := []*ast.Ident{ast.NewIdent("xxx")}
+	of1 := reflect.ValueOf(idents)
+	of2 := reflect.ValueOf(ast.CallExpr{}).Addr()
+	exps := []ast.Expr{&ast.CallExpr{}}
+
+	fields := []reflect.Value{of1, of2, reflect.ValueOf(exps)}
+	value := createStruct(reflect.TypeOf(ast.ValueSpec{}), fields)
+
+	ast.Print(token.NewFileSet(), value.Interface())
+
+	//fmt.Println("value =", value)
+
+}
+
+
+
