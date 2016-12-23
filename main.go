@@ -12,7 +12,16 @@ import (
 	"./sexpr"
 	"go/ast"
 	"reflect"
+	"go/parser"
 )
+
+func _fake() {
+	ast.Print(nil, nil)
+	token.NewFileSet()
+	reflect.ValueOf(nil)
+	fmt.Print()
+	parser.ParseExpr("")
+}
 
 func check(e error) {
 	if e != nil {
@@ -70,78 +79,77 @@ func main2() {
 
 }
 
-func filter(node sexpr.ANode) []sexpr.ANode {
-	println("filer")
-	fmt.Println("Name: ", node.Name())
+func process(node sexpr.ANode) reflect.Value {
+	switch node.(type) {
+	case sexpr.ABranch:
+		name := node.Name()
+		switch name {
+		case "const":
+			repr := node.Children()[0].String()
+			return reflect.ValueOf(&ast.BasicLit{Kind: token.STRING, Value: repr})
+		case "%":
+			fields := []reflect.Value{}
+			for _,child := range node.Children() {
+				fields = append(fields, process(child))
+			}
+			return sexpr.CreateSlice(fields)
+		}
+		// default:
+		fields := []reflect.Value{}
+		for _,child := range node.Children() {
+			fields = append(fields, process(child))
+		}
+		t, ok := sexpr.TypeIndex[name]
+		if !ok {
+			panic("type not found: " + name)
+		}
+		return sexpr.CreateStruct(t, fields)
+	case sexpr.AString:
+		return reflect.ValueOf(ast.NewIdent(node.String()))
+
+	case sexpr.ASymbol:
+		val := node.String()
+		switch val {
+		case "nil":
+			return reflect.ValueOf(nil)
+		case "true":
+			return reflect.ValueOf(true)
+		case "false":
+			return reflect.ValueOf(false)
+		case "import":
+			return reflect.ValueOf(token.IMPORT)
+		case "type":
+			return reflect.ValueOf(token.TYPE)
+		default:
+			panic(val)
+		}
+	}
+	fmt.Println("process")
 	fmt.Println("Children: ", node.Children())
 	child := node.Children()[1]
 	fmt.Println(child.Name())
-	return []sexpr.ANode{}
+
+	panic(nil)
 }
 
-func _fake() {
-	ast.Print(nil, nil)
-	token.NewFileSet()
-}
-
-type Test struct {
-		       //Doc     *ast.CommentGroup // associated documentation; or nil
-	Names ast.Expr // value names (len(Names) > 0)
-		       //Type    ast.Expr          // value type; or nil
-		       //Values  []ast.Expr        // initial values; or nil
-		       //Comment *ast.CommentGroup // line comments; or nil
-}
-
-//type ValueSpec struct {
-//	Doc     *CommentGroup // associated documentation; or nil
-//	Names   []*Ident      // value names (len(Names) > 0)
-//	Type    Expr          // value type; or nil
-//	Values  []Expr        // initial values; or nil
-//	Comment *CommentGroup // line comments; or nil
-//}
-
-func createStruct(t reflect.Type, fields []reflect.Value) reflect.Value {
-	item := reflect.New(t).Elem()
-	pos := 0
-	n := t.NumField()
-	for i := 0; i < n; i++ {
-		// exclude non-exported fields because their
-		// values cannot be accessed via reflection
-		curr := item.Field(i)
-		if (!sexpr.IsBadField(curr)) {
-			curr.Set(fields[pos])
-			pos++
-		}
-	}
-	return item
-}
 
 func main() {
-	//filename := "/Users/baskakov/IdeaProjects/homoiconic-go/assets/code.clj"
-	//file := sexpr.ParseFile(token.NewFileSet(), filename)
-	//tree := file.(sexpr.ABranch).Val[0]
-	//filter(tree)
 
-	//fmt.Println(tree)
-	//ast.Print(token.NewFileSet(), tree)
+	filename2 := "./assets/types.go"
+	tree2, _ := parser.ParseFile(token.NewFileSet(), filename2, nil, 0)
 
-	//fmt.Println(tree)
+	filename := "./assets/code.clj"
+	file := sexpr.ParseFile(token.NewFileSet(), filename)
+	tree := file.(sexpr.ABranch).Val[0]
+	fmt.Println(tree)
 
-	//tree.(sexpr.ABranch)
+	result := process(tree).Interface().(*ast.File)
 
-	idents := []*ast.Ident{ast.NewIdent("xxx")}
-	of1 := reflect.ValueOf(idents)
-	of2 := reflect.ValueOf(ast.CallExpr{}).Addr()
-	exps := []ast.Expr{&ast.CallExpr{}}
+	printer := &sexpr.SPrinter{}
+	printer.Sprint(reflect.ValueOf(tree2.Decls[1]))
+	fmt.Println("--------------")
+	printer.Sprint(reflect.ValueOf(result.Decls[1]))
 
-	fields := []reflect.Value{of1, of2, reflect.ValueOf(exps)}
-	value := createStruct(reflect.TypeOf(ast.ValueSpec{}), fields)
-
-	ast.Print(token.NewFileSet(), value.Interface())
-
-	//fmt.Println("value =", value)
+	fmt.Println()
 
 }
-
-
-

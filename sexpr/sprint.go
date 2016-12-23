@@ -161,9 +161,7 @@ func (p *SPrinter) Sprint(x reflect.Value) {
 		case string:
 			// print strings in quotes
 			p.printf("%q", v)
-		case int:
-			p.printf("%d", v)
-		case token.Pos:
+		case token.Pos, bool, int:
 			p.printf("%v", v)
 		case token.Token:
 			i2 := v.(token.Token)

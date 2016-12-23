@@ -71,7 +71,7 @@ func (stmt ASymbol) String() string {
 }
 
 func (stmt AString) String() string {
-	return stmt.Val
+	return fmt.Sprintf("%q", stmt.Val)
 }
 
 func parseCode(lexer *scanner.Scanner, state []ANode) ANode {
@@ -82,63 +82,52 @@ func parseCode(lexer *scanner.Scanner, state []ANode) ANode {
 	}
 	switch tok {
 	case token.EOF:
-		fmt.Println("dbg: token.EOF")
+		//fmt.Println("dbg: token.EOF")
 		return ABranch{Val: state}
 
 	case token.LPAREN, token.LBRACK, token.LBRACE:
-		fmt.Println("dbg: token.LPAREN")
+		//fmt.Println("dbg: token.LPAREN")
 		expr := parseCode(lexer, []ANode{})
 		return parseCode(lexer, append(state, expr))
 
 	case token.RPAREN, token.RBRACK, token.RBRACE:
-		fmt.Println("dbg: token.RPAREN")
+		//fmt.Println("dbg: token.RPAREN")
 		return ABranch{Val: state}
 
 	case token.INT, token.FLOAT:
-		fmt.Println("dbg: ANumber")
+		//fmt.Println("dbg: ANumber")
 		newElem := ANumber{Val: lit, kind: tok}
 		return parseCode(lexer, append(state, newElem))
 
-	case token.STRING, token.CHAR, token.CONST:
-		fmt.Println("dbg: AString = " + lit)
+	case token.STRING, token.CHAR:
+		//fmt.Println("dbg: AString = " + lit)
 		newElem := AString{Val: lit}
 		return parseCode(lexer, append(state, newElem))
 	}
 	switch {
 	case tok.IsOperator() || tok.IsKeyword():
 		// IsOperator has a bug with brackets and semicolon!!
-		fmt.Println("dbg: token.IsOperator = " + tok.String())
+		//fmt.Println("dbg: token.IsOperator = " + tok.String())
 		newElem := ASymbol{Val: tok.String()}
 		return parseCode(lexer, append(state, newElem))
 
 	case tok == token.IDENT || tok ==  token.IF:
 		// IsOperator has a bug with brackets and semicolon!!
-		fmt.Println("dbg: token.IsOperator = " + lit)
+		//fmt.Println("dbg: token.IsOperator = " + lit)
 		newElem := ASymbol{Val: lit}
 		return parseCode(lexer, append(state, newElem))
 
 	default:
 		// Unknown token
-		fmt.Println("dbg: default")
+		//fmt.Println("dbg: default")
 		fmt.Printf("\t%s    ->  %q\n", tok, lit)
 		panic("SUCCESS default branch of parseCode")
 		return nil
 	}
 }
 
-//default:
-////                    System.out.println("L_ATOM");
-////                    System.out.println(state.getClass());
-//state.add(new AString(curr));
-//return reduceTree(tokens, state);
-//}
-//} else {
-//return new ABranch(state);
-//}
 
 func ParseFile(fset *token.FileSet, filename string) ANode {
-
-	fmt.Println("dbg 1")
 
 	// get source
 	text, err := ioutil.ReadFile(filename)
@@ -158,8 +147,6 @@ func ParseFile(fset *token.FileSet, filename string) ANode {
 	var m scanner.Mode
 	lexer.Init(fileSet, text, errorHandler, m)
 
-	fmt.Println("dbg 2.1")
-
 	// Repeated calls to Scan yield the token sequence found in the input.
 	//	for {
 	//		_, tok, lit := lexer.Scan()
@@ -169,8 +156,6 @@ func ParseFile(fset *token.FileSet, filename string) ANode {
 	//		fmt.Printf("\t%s    %q\n", tok, lit)
 	//	}
 	//
-
-	fmt.Println("dbg 2.2")
 
 	return parseCode(&lexer, []ANode{})
 }
