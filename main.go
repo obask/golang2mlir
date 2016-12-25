@@ -105,7 +105,8 @@ func process(node sexpr.ANode) reflect.Value {
 		}
 		return sexpr.CreateStruct(t, fields)
 	case sexpr.AString:
-		return reflect.ValueOf(ast.NewIdent(node.String()))
+		ss := node.String()
+		return reflect.ValueOf(ast.NewIdent(ss[1:len(ss)-1]))
 
 	case sexpr.ASymbol:
 		val := node.String()
@@ -141,15 +142,15 @@ func main() {
 	filename := "./assets/code.clj"
 	file := sexpr.ParseFile(token.NewFileSet(), filename)
 	tree := file.(sexpr.ABranch).Val[0]
-	fmt.Println(tree)
+	//fmt.Println(tree)
 
 	result := process(tree).Interface().(*ast.File)
 
 	printer := &sexpr.SPrinter{}
 	printer.Sprint(reflect.ValueOf(tree2.Decls[1]))
+	fmt.Println()
 	fmt.Println("--------------")
 	printer.Sprint(reflect.ValueOf(result.Decls[1]))
 
 	fmt.Println()
-
 }

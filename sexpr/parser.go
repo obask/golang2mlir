@@ -101,7 +101,7 @@ func parseCode(lexer *scanner.Scanner, state []ANode) ANode {
 
 	case token.STRING, token.CHAR:
 		//fmt.Println("dbg: AString = " + lit)
-		newElem := AString{Val: lit}
+		newElem := AString{Val: lit[1:len(lit)-1]}
 		return parseCode(lexer, append(state, newElem))
 	}
 	switch {
