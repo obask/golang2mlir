@@ -5,14 +5,14 @@
 package main
 
 import (
+	"awesomeProject/sexpr"
 	"fmt"
+	"go/ast"
+	"go/parser"
 	"go/scanner"
 	"go/token"
 	"io/ioutil"
-	"./sexpr"
-	"go/ast"
 	"reflect"
-	"go/parser"
 )
 
 func _fake() {
@@ -89,14 +89,14 @@ func process(node sexpr.ANode) reflect.Value {
 			return reflect.ValueOf(&ast.BasicLit{Kind: token.STRING, Value: repr})
 		case "%":
 			fields := []reflect.Value{}
-			for _,child := range node.Children() {
+			for _, child := range node.Children() {
 				fields = append(fields, process(child))
 			}
 			return sexpr.CreateSlice(fields)
 		}
 		// default:
 		fields := []reflect.Value{}
-		for _,child := range node.Children() {
+		for _, child := range node.Children() {
 			fields = append(fields, process(child))
 		}
 		t, ok := sexpr.TypeIndex[name]
@@ -106,7 +106,7 @@ func process(node sexpr.ANode) reflect.Value {
 		return sexpr.CreateStruct(t, fields)
 	case sexpr.AString:
 		ss := node.String()
-		return reflect.ValueOf(ast.NewIdent(ss[1:len(ss)-1]))
+		return reflect.ValueOf(ast.NewIdent(ss[1 : len(ss)-1]))
 
 	case sexpr.ASymbol:
 		val := node.String()
@@ -133,8 +133,7 @@ func process(node sexpr.ANode) reflect.Value {
 	panic(nil)
 }
 
-
-func main() {
+func main3() {
 
 	filename2 := "./assets/types.go"
 	tree2, _ := parser.ParseFile(token.NewFileSet(), filename2, nil, 0)
