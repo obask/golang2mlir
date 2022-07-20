@@ -6,12 +6,12 @@ type Operator struct {
 	Operands   []ValueId
 	Regions    []Region
 	ReturnName ValueId
-	Attributes map[string]Attribute
+	Attributes AttributesMap
 }
 
-type Region struct {
-	Blocks []BasicBlock
-}
+type AttributesMap map[string]Attribute
+
+type Region []BasicBlock
 
 type BasicBlock struct {
 	Label BlockLabel

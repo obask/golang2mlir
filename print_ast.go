@@ -30,14 +30,31 @@ func ololo() {
 //const np token.Pos = 0
 
 //goland:noinspection GoUnhandledErrorResult
-func main() {
+func main7() {
 
 	println("----")
+
+	op2 := mlir.Operator{
+		Name:       "func",
+		Dialect:    "go",
+		Regions:    nil,
+		ReturnName: "",
+		Attributes: nil,
+	}
+	label := mlir.BlockLabel{
+		Name:        "^bb0",
+		ParamValues: nil,
+		ParamTypes:  nil,
+	}
+	bb0 := mlir.BasicBlock{
+		Label: label,
+		Items: []mlir.Operator{op2, op2},
+	}
 
 	op := mlir.Operator{
 		Name:       "func",
 		Dialect:    "go",
-		Regions:    nil,
+		Regions:    []mlir.Region{[]mlir.BasicBlock{bb0}},
 		ReturnName: "%078",
 		Attributes: nil,
 	}

@@ -5,6 +5,7 @@
 package main
 
 import (
+	"awesomeProject/mlir"
 	"awesomeProject/sexpr"
 	"fmt"
 	"go/ast"
@@ -12,6 +13,7 @@ import (
 	"go/scanner"
 	"go/token"
 	"io/ioutil"
+	"os"
 	"reflect"
 )
 
@@ -27,6 +29,40 @@ func check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+func main() {
+
+	println("----")
+
+	op2 := mlir.Operator{
+		Name:       "func",
+		Dialect:    "go",
+		Regions:    nil,
+		ReturnName: "",
+		Attributes: nil,
+	}
+	label := mlir.BlockLabel{
+		Name:        "^bb0",
+		ParamValues: nil,
+		ParamTypes:  nil,
+	}
+	bb0 := mlir.BasicBlock{
+		Label: label,
+		Items: []mlir.Operator{op2, op2},
+	}
+
+	op := mlir.Operator{
+		Name:       "func",
+		Dialect:    "go",
+		Regions:    []mlir.Region{[]mlir.BasicBlock{bb0, bb0}},
+		ReturnName: "%078",
+		Attributes: nil,
+	}
+
+	op.RenderTo(os.Stdout, "")
+
+	return
 }
 
 func main1() {
