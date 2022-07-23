@@ -5,6 +5,7 @@
 package main
 
 import (
+	"awesomeProject/go2ssa"
 	"awesomeProject/mlir"
 	"awesomeProject/sexpr"
 	"fmt"
@@ -32,15 +33,28 @@ func check(e error) {
 }
 
 func main() {
-
 	println("----")
 
+	filePath := "./hello.go"
+	fset := token.NewFileSet()
+	code, err := parser.ParseFile(fset, filePath, nil, 0)
+	if err != nil {
+		panic(err)
+	}
+
+	g := &go2ssa.GhostVisitor{}
+
+	ast.Walk(g, code)
+
+	fmt.Printf("%+v\n", g.Result)
+
+	return
 	op2 := mlir.Operator{
 		Name:       "func",
 		Dialect:    "go",
 		Regions:    nil,
 		ReturnName: "",
-		Attributes: nil,
+		Attributes: map[string]mlir.Attribute{"dfadsfg": mlir.StringAttr("\"dsad\""), "dfadsfg2": mlir.NumberAttr(123)},
 	}
 	label := mlir.BlockLabel{
 		Name:        "^bb0",
@@ -57,7 +71,7 @@ func main() {
 		Dialect:    "go",
 		Regions:    []mlir.Region{[]mlir.BasicBlock{bb0, bb0}},
 		ReturnName: "%078",
-		Attributes: nil,
+		Attributes: map[string]mlir.Attribute{"symbol_name": mlir.StringAttr("@main")},
 	}
 
 	op.RenderTo(os.Stdout, "")

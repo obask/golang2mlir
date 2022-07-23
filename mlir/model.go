@@ -40,16 +40,12 @@ type FunctionTypeAttr struct {
 	ReturnType KotlinType
 }
 
-func (s *FunctionTypeAttr) attributeImpl() {}
+func (s FunctionTypeAttr) attributeImpl() {}
 
-type NumberAttr string
+type NumberAttr int
 
-func (s *NumberAttr) attributeImpl() {}
+func (s NumberAttr) attributeImpl() {}
 
 type StringAttr string
 
-func (s *StringAttr) attributeImpl() {}
-
-//
-//
-//
+func (s StringAttr) attributeImpl() {}

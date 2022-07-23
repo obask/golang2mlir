@@ -6,22 +6,6 @@ import (
 	"strings"
 )
 
-//type printer struct {
-//	output io.Writer
-//	indent int         // current indentation level
-//}
-//
-//func Fprint(w io.Writer, fset *token.FileSet, x any) error {
-//	p := printer{
-//		output: w,
-//		indent: 0,
-//	}
-//
-//
-//	p.print("das")
-//	return nil
-//}
-
 func mapSlice[T any, M any](a []T, f func(T) M) []M {
 	n := make([]M, len(a))
 	for i, e := range a {
@@ -94,7 +78,7 @@ func (attributes AttributesMap) RenderTo(w io.Writer, indent string) {
 	isFirst := true
 	for k, v := range attributes {
 		if isFirst {
-			isFirst = true
+			isFirst = false
 		} else {
 			_, _ = fmt.Fprint(w, ", ")
 		}
