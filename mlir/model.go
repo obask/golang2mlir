@@ -1,5 +1,7 @@
 package mlir
 
+import "fmt"
+
 type Operator struct {
 	Name       string
 	Dialect    string
@@ -9,12 +11,17 @@ type Operator struct {
 	Attributes AttributesMap
 }
 
+func (operator *Operator) SetReturnName() {
+	sprintf := fmt.Sprintf("%p", operator)
+	operator.ReturnName = ValueId("%" + sprintf[len(sprintf)-3:])
+}
+
 type AttributesMap map[string]Attribute
 
 type Region []BasicBlock
 
 type BasicBlock struct {
-	Label BlockLabel
+	Label *BlockLabel
 	Items []Operator
 }
 

@@ -53,7 +53,9 @@ func (l BlockLabel) RenderTo(w io.Writer, indent string) {
 }
 
 func (block BasicBlock) RenderTo(w io.Writer, indent string) {
-	block.Label.RenderTo(w, indent)
+	if block.Label != nil {
+		block.Label.RenderTo(w, indent)
+	}
 	for _, o := range block.Items {
 		o.RenderTo(w, indent+"  ")
 	}
@@ -82,7 +84,12 @@ func (attributes AttributesMap) RenderTo(w io.Writer, indent string) {
 		} else {
 			_, _ = fmt.Fprint(w, ", ")
 		}
-		_, _ = fmt.Fprintf(w, "%s: %v", k, v)
+		switch expr := v.(type) {
+		case StringAttr:
+			_, _ = fmt.Fprintf(w, "%s: \"%v\"", k, expr)
+		default:
+			_, _ = fmt.Fprintf(w, "%s: %v", k, expr)
+		}
 	}
 	_, _ = fmt.Fprint(w, "} ")
 }

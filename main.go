@@ -6,7 +6,6 @@ package main
 
 import (
 	"awesomeProject/go2ssa"
-	"awesomeProject/mlir"
 	"awesomeProject/sexpr"
 	"fmt"
 	"go/ast"
@@ -46,38 +45,38 @@ func main() {
 
 	ast.Walk(g, code)
 
-	fmt.Printf("%+v\n", g.Result)
-
-	return
-	op2 := mlir.Operator{
-		Name:       "func",
-		Dialect:    "go",
-		Regions:    nil,
-		ReturnName: "",
-		Attributes: map[string]mlir.Attribute{"dfadsfg": mlir.StringAttr("\"dsad\""), "dfadsfg2": mlir.NumberAttr(123)},
-	}
-	label := mlir.BlockLabel{
-		Name:        "^bb0",
-		ParamValues: nil,
-		ParamTypes:  nil,
-	}
-	bb0 := mlir.BasicBlock{
-		Label: label,
-		Items: []mlir.Operator{op2, op2},
-	}
-
-	op := mlir.Operator{
-		Name:       "func",
-		Dialect:    "go",
-		Regions:    []mlir.Region{[]mlir.BasicBlock{bb0, bb0}},
-		ReturnName: "%078",
-		Attributes: map[string]mlir.Attribute{"symbol_name": mlir.StringAttr("@main")},
-	}
-
-	op.RenderTo(os.Stdout, "")
+	//fmt.Printf("%+v\n", g.Result)
+	println("render:")
+	g.Result.RenderTo(os.Stdout, "")
 
 	return
 }
+
+//return
+//op2 := mlir.Operator{
+//	Name:       "func",
+//	Dialect:    "go",
+//	Regions:    nil,
+//	ReturnName: "",
+//	Attributes: map[string]mlir.Attribute{"dfadsfg": mlir.StringAttr("\"dsad\""), "dfadsfg2": mlir.NumberAttr(123)},
+//}
+//label := &mlir.BlockLabel{
+//	Name:        "^bb0",
+//	ParamValues: nil,
+//	ParamTypes:  nil,
+//}
+//bb0 := mlir.BasicBlock{
+//	Label: label,
+//	Items: []mlir.Operator{op2, op2},
+//}
+//
+//op := mlir.Operator{
+//	Name:       "func",
+//	Dialect:    "go",
+//	Regions:    []mlir.Region{[]mlir.BasicBlock{bb0, bb0}},
+//	ReturnName: "%078",
+//	Attributes: map[string]mlir.Attribute{"symbol_name": mlir.StringAttr("@main")},
+//}
 
 func main1() {
 	//filename := "./assets/code.clj"

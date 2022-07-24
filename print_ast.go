@@ -41,7 +41,7 @@ func main7() {
 		ReturnName: "",
 		Attributes: nil,
 	}
-	label := mlir.BlockLabel{
+	label := &mlir.BlockLabel{
 		Name:        "^bb0",
 		ParamValues: nil,
 		ParamTypes:  nil,
