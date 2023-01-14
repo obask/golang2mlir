@@ -47,7 +47,7 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 		for _, decl := range n.Decls {
 			ast.Walk(&newVisitor, decl)
 		}
-		op.Regions = []mlir.Region{[]mlir.BasicBlock{{Items: newVisitor.insertionPoint}}}
+		op.Regions = []mlir.Region{{Items: newVisitor.insertionPoint}}
 		v.Result = op
 		//op.Attributes["Decls"] = mlir.StringAttr(fmt.Sprintf("%v", n.Decls))
 		v.insertionPoint = append(v.insertionPoint, *op)
@@ -63,7 +63,7 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 		op.Attributes["Type"] = mlir.StringAttr(fmt.Sprintf("%v", n.Type))
 		newVisitor := GhostVisitor{}
 		ast.Walk(&newVisitor, n.Body)
-		op.Regions = []mlir.Region{[]mlir.BasicBlock{{Items: newVisitor.insertionPoint}}}
+		op.Regions = []mlir.Region{{Items: newVisitor.insertionPoint}}
 		v.insertionPoint = append(v.insertionPoint, *op)
 		return nil
 	case *ast.BlockStmt:
@@ -121,16 +121,16 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 		//		Body *BlockStmt
 		newVisitor := GhostVisitor{}
 		ast.Walk(&newVisitor, n.Init)
-		op.Regions = append(op.Regions, []mlir.BasicBlock{{Items: newVisitor.insertionPoint}})
+		op.Regions = append(op.Regions, mlir.Region{Items: newVisitor.insertionPoint})
 		newVisitor = GhostVisitor{}
 		ast.Walk(&newVisitor, n.Cond)
-		op.Regions = append(op.Regions, []mlir.BasicBlock{{Items: newVisitor.insertionPoint}})
+		op.Regions = append(op.Regions, mlir.Region{Items: newVisitor.insertionPoint})
 		newVisitor = GhostVisitor{}
 		ast.Walk(&newVisitor, n.Post)
-		op.Regions = append(op.Regions, []mlir.BasicBlock{{Items: newVisitor.insertionPoint}})
+		op.Regions = append(op.Regions, mlir.Region{Items: newVisitor.insertionPoint})
 		newVisitor = GhostVisitor{}
 		ast.Walk(&newVisitor, n.Body)
-		op.Regions = append(op.Regions, []mlir.BasicBlock{{Items: newVisitor.insertionPoint}})
+		op.Regions = append(op.Regions, mlir.Region{Items: newVisitor.insertionPoint})
 		v.insertionPoint = append(v.insertionPoint, *op)
 		return nil
 	case *ast.BinaryExpr:

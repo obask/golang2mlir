@@ -18,14 +18,12 @@ func (operator *Operator) SetReturnName() {
 
 type AttributesMap map[string]Attribute
 
-type Region []BasicBlock
-
-type BasicBlock struct {
-	Label *BlockLabel
+type Region struct {
+	Label *Label
 	Items []Operator
 }
 
-type BlockLabel struct {
+type Label struct {
 	Name        BlockId
 	ParamValues []ValueId
 	ParamTypes  []KotlinType

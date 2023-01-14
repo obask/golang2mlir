@@ -1,18 +1,16 @@
 // Go has strange behavior -- in one case it doesn't support generics
 // In over case it can't convert []AnyType to []interface[] even pointers
-// So it don't support sub-typing that makes generic coding really hard
+// So it doesn't support sub-typing that makes generic coding really hard
 
 package main
 
 import (
 	"awesomeProject/go2ssa"
-	"awesomeProject/sexpr"
 	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/scanner"
 	"go/token"
-	"io/ioutil"
 	"os"
 	"reflect"
 )
@@ -29,6 +27,17 @@ func check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+func GoydaFilter(k string, v reflect.Value) bool {
+	if v.Type().AssignableTo(reflect.TypeOf(token.Pos(0))) {
+		return false
+	}
+	switch k {
+	case "Obj":
+		return false
+	}
+	return ast.NotNilFilter(k, v)
 }
 
 func main() {
@@ -48,6 +57,8 @@ func main() {
 	//fmt.Printf("%+v\n", g.Result)
 	println("render:")
 	g.Result.RenderTo(os.Stdout, "")
+
+	Fprint(os.Stdout, fset, code, GoydaFilter)
 
 	return
 }
@@ -78,31 +89,10 @@ func main() {
 //	Attributes: map[string]mlir.Attribute{"symbol_name": mlir.StringAttr("@main")},
 //}
 
-func main1() {
-	//filename := "./assets/code.clj"
-	filename := "/Users/baskakov/IdeaProjects/homoiconic-go/assets/types.go"
-	tree := sexpr.ParseFile(token.NewFileSet(), filename)
-
-	fmt.Println("dbg 3")
-
-	//	tree := ABranch{val: []ATree{
-	//		ASymbol{val: "main"},
-	//		ASymbol{val: "dsa"},
-	//		ABranch{val: []ATree{
-	//			ASymbol{val: "+"},
-	//			ANumber{val: "1"},
-	//			ANumber{val: "2"},
-	//			},},
-	//	},}
-
-	fmt.Println(tree)
-
-}
-
 func main2() {
 
 	filename := "./resources/result.clj"
-	src, err := ioutil.ReadFile(filename)
+	src, err := os.ReadFile(filename)
 	check(err)
 
 	//	src := []byte("cos(x) + 1i*sin(x) // Euler")
@@ -126,79 +116,4 @@ func main2() {
 		//		fmt.Printf("%s\t%s\t%q\n", fset.Position(pos), tok, lit)
 	}
 
-}
-
-func process(node sexpr.ANode) reflect.Value {
-	switch node.(type) {
-	case sexpr.ABranch:
-		name := node.Name()
-		switch name {
-		case "const":
-			repr := node.Children()[0].String()
-			return reflect.ValueOf(&ast.BasicLit{Kind: token.STRING, Value: repr})
-		case "%":
-			fields := []reflect.Value{}
-			for _, child := range node.Children() {
-				fields = append(fields, process(child))
-			}
-			return sexpr.CreateSlice(fields)
-		}
-		// default:
-		fields := []reflect.Value{}
-		for _, child := range node.Children() {
-			fields = append(fields, process(child))
-		}
-		t, ok := sexpr.TypeIndex[name]
-		if !ok {
-			panic("type not found: " + name)
-		}
-		return sexpr.CreateStruct(t, fields)
-	case sexpr.AString:
-		ss := node.String()
-		return reflect.ValueOf(ast.NewIdent(ss[1 : len(ss)-1]))
-
-	case sexpr.ASymbol:
-		val := node.String()
-		switch val {
-		case "nil":
-			return reflect.ValueOf(nil)
-		case "true":
-			return reflect.ValueOf(true)
-		case "false":
-			return reflect.ValueOf(false)
-		case "import":
-			return reflect.ValueOf(token.IMPORT)
-		case "type":
-			return reflect.ValueOf(token.TYPE)
-		default:
-			panic(val)
-		}
-	}
-	fmt.Println("process")
-	fmt.Println("Children: ", node.Children())
-	child := node.Children()[1]
-	fmt.Println(child.Name())
-
-	panic(nil)
-}
-
-func main3() {
-
-	filename2 := "./assets/types.go"
-	tree2, _ := parser.ParseFile(token.NewFileSet(), filename2, nil, 0)
-
-	filename := "./assets/code.clj"
-	file := sexpr.ParseFile(token.NewFileSet(), filename)
-	tree := file.(sexpr.ABranch).Val[0]
-	//fmt.Println(tree)
-
-	result := process(tree).Interface().(*ast.File)
-
-	printer := &sexpr.SPrinter{}
-	printer.Sprint(reflect.ValueOf(tree2.Decls[1]))
-	fmt.Println()
-	fmt.Println("--------------")
-	printer.Sprint(reflect.ValueOf(result.Decls[1]))
-
-	fmt.Println()
 }

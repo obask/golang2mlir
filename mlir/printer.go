@@ -42,7 +42,7 @@ func renderRegions(regions []Region, w io.Writer, indent string) {
 	_, _ = fmt.Fprint(w, ") ")
 }
 
-func (l BlockLabel) RenderTo(w io.Writer, indent string) {
+func (l Label) RenderTo(w io.Writer, indent string) {
 	_, _ = fmt.Fprintf(w, "%s%s(", indent, l.Name)
 	var results []string
 	for i := range l.ParamTypes {
@@ -52,22 +52,13 @@ func (l BlockLabel) RenderTo(w io.Writer, indent string) {
 	_, _ = fmt.Fprintf(w, "%s):\n", joined)
 }
 
-func (block BasicBlock) RenderTo(w io.Writer, indent string) {
-	if block.Label != nil {
-		block.Label.RenderTo(w, indent)
-	}
-	for _, o := range block.Items {
-		o.RenderTo(w, indent+"  ")
-	}
-}
-
 func (region Region) RenderTo(w io.Writer, indent string) {
 	_, _ = fmt.Fprint(w, "{\n")
-	for i, block := range region {
-		if i > 0 {
-			_, _ = fmt.Fprint(w, "\n")
-		}
-		block.RenderTo(w, indent)
+	if region.Label != nil {
+		region.Label.RenderTo(w, indent)
+	}
+	for _, o := range region.Items {
+		o.RenderTo(w, indent+"  ")
 	}
 	_, _ = fmt.Fprintf(w, "%s}", indent)
 }

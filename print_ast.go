@@ -41,12 +41,12 @@ func main7() {
 		ReturnName: "",
 		Attributes: nil,
 	}
-	label := &mlir.BlockLabel{
+	label := &mlir.Label{
 		Name:        "^bb0",
 		ParamValues: nil,
 		ParamTypes:  nil,
 	}
-	bb0 := mlir.BasicBlock{
+	bb0 := mlir.Region{
 		Label: label,
 		Items: []mlir.Operator{op2, op2},
 	}
@@ -54,7 +54,7 @@ func main7() {
 	op := mlir.Operator{
 		Name:       "func",
 		Dialect:    "go",
-		Regions:    []mlir.Region{[]mlir.BasicBlock{bb0}},
+		Regions:    []mlir.Region{bb0},
 		ReturnName: "%078",
 		Attributes: nil,
 	}
