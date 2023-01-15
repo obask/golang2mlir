@@ -3,17 +3,21 @@ package mlir
 import "fmt"
 
 type Operator struct {
-	Name       string
-	Dialect    string
-	Operands   []ValueId
-	Regions    []Region
-	ReturnName ValueId
-	Attributes AttributesMap
+	Name         string
+	Dialect      string
+	Operands     []ValueId
+	OperandTypes []SimpleType
+	Regions      []Region
+	ReturnNames  []ValueId
+	ReturnTypes  []SimpleType
+	Attributes   AttributesMap
 }
 
-func (operator *Operator) SetReturnName() {
-	sprintf := fmt.Sprintf("%p", operator)
-	operator.ReturnName = ValueId("%" + sprintf[len(sprintf)-3:])
+func (op *Operator) SetReturnName() {
+	sprintf := fmt.Sprintf("%p", op)
+	if op.ReturnNames == nil {
+		op.ReturnNames = []ValueId{ValueId("%" + sprintf[len(sprintf)-3:])}
+	}
 }
 
 type AttributesMap map[string]Attribute
@@ -26,7 +30,7 @@ type Region struct {
 type Label struct {
 	Name        BlockId
 	ParamValues []ValueId
-	ParamTypes  []KotlinType
+	ParamTypes  []SimpleType
 }
 
 type BlockId string
@@ -37,12 +41,12 @@ type Attribute interface {
 	attributeImpl()
 }
 
-type KotlinType string
+type SimpleType string
 
 type FunctionTypeAttr struct {
 	Params     []ValueId
-	Types      []KotlinType
-	ReturnType KotlinType
+	Types      []SimpleType
+	ReturnType SimpleType
 }
 
 func (s FunctionTypeAttr) attributeImpl() {}

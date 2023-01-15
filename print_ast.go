@@ -35,11 +35,11 @@ func main7() {
 	println("----")
 
 	op2 := mlir.Operator{
-		Name:       "func",
-		Dialect:    "go",
-		Regions:    nil,
-		ReturnName: "",
-		Attributes: nil,
+		Name:        "func",
+		Dialect:     "go",
+		Regions:     nil,
+		ReturnNames: nil,
+		Attributes:  nil,
 	}
 	label := &mlir.Label{
 		Name:        "^bb0",
@@ -52,11 +52,11 @@ func main7() {
 	}
 
 	op := mlir.Operator{
-		Name:       "func",
-		Dialect:    "go",
-		Regions:    []mlir.Region{bb0},
-		ReturnName: "%078",
-		Attributes: nil,
+		Name:        "func",
+		Dialect:     "go",
+		Regions:     []mlir.Region{bb0},
+		ReturnNames: []mlir.ValueId{"%078"},
+		Attributes:  nil,
 	}
 
 	op.RenderTo(os.Stdout, "  ")

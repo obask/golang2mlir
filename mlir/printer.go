@@ -14,17 +14,18 @@ func mapSlice[T any, M any](a []T, f func(T) M) []M {
 	return n
 }
 
-func (o Operator) RenderTo(w io.Writer, indent string) {
+func (op *Operator) RenderTo(w io.Writer, indent string) {
 	_, _ = fmt.Fprint(w, indent)
-	if o.ReturnName != "" {
-		_, _ = fmt.Fprintf(w, "%s = ", o.ReturnName)
+	if op.ReturnNames != nil {
+		returnNames := mapSlice(op.ReturnNames, func(t ValueId) string { return string(t) })
+		_, _ = fmt.Fprintf(w, "%s = ", strings.Join(returnNames, ", "))
 	}
-	_, _ = fmt.Fprintf(w, "\"%s.%s\"", o.Dialect, o.Name)
-	operands := mapSlice(o.Operands, func(t ValueId) string { return string(t) })
+	_, _ = fmt.Fprintf(w, "\"%s.%s\"", op.Dialect, op.Name)
+	operands := mapSlice(op.Operands, func(t ValueId) string { return string(t) })
 	joined := strings.Join(operands, ", ")
 	_, _ = fmt.Fprintf(w, "(%s) ", joined)
-	renderRegions(o.Regions, w, indent)
-	o.Attributes.RenderTo(w, indent)
+	renderRegions(op.Regions, w, indent)
+	op.Attributes.RenderTo(w, indent)
 	_, _ = fmt.Fprintf(w, ": () -> ()\n")
 }
 

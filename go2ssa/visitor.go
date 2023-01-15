@@ -6,6 +6,7 @@ import (
 	"go/ast"
 	"go/token"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -25,12 +26,12 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 	}
 	typeName := fmt.Sprint(reflect.TypeOf(node))[5:]
 	op := &mlir.Operator{
-		Name:       strings.ToLower(typeName[:1]) + typeName[1:],
-		Dialect:    "go",
-		Operands:   nil,
-		Regions:    nil,
-		ReturnName: "",
-		Attributes: map[string]mlir.Attribute{},
+		Name:        strings.ToLower(typeName[:1]) + typeName[1:],
+		Dialect:     "go",
+		Operands:    nil,
+		Regions:     nil,
+		ReturnNames: nil,
+		Attributes:  map[string]mlir.Attribute{},
 	}
 	switch n := node.(type) {
 	case *ast.File:
@@ -93,8 +94,19 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 	case *ast.BasicLit:
 		//Kind     token.Token // token.INT, token.FLOAT, token.IMAG, token.CHAR, or token.STRING
 		//Value    string      // literal string; e.g. 42, 0x7f, 3.14, 1e-9, 2.4i, 'a', '\x7f', "foo" or `\m\n\o`
-		op.Attributes["kind"] = mlir.StringAttr(n.Kind.String())
-		op.Attributes["value"] = mlir.StringAttr(n.Value)
+		switch n.Kind {
+		case token.INT:
+			op.Dialect = "arith"
+			op.Name = "constant"
+			ii, _ := strconv.Atoi(n.Value)
+			op.Attributes["value"] = mlir.NumberAttr(ii)
+			op.ReturnNames = []mlir.ValueId{mlir.ValueId("%c_" + n.Value)}
+			op.ReturnTypes = []mlir.SimpleType{"i32"}
+			break
+		default:
+			op.Attributes["kind"] = mlir.StringAttr(n.Kind.String())
+			op.Attributes["value"] = mlir.StringAttr(n.Value)
+		}
 	case *ast.GenDecl:
 		//		Tok    token.Token   // IMPORT, CONST, TYPE, or VAR
 		//		Specs  []Spec
@@ -168,6 +180,6 @@ func (v *GhostVisitor) processOperands(op *mlir.Operator, expressions []ast.Expr
 	}
 	v.insertionPoint = append(v.insertionPoint, newVisitor.insertionPoint...)
 	for _, operand := range newVisitor.insertionPoint {
-		op.Operands = append(op.Operands, operand.ReturnName)
+		op.Operands = append(op.Operands, operand.ReturnNames[0])
 	}
 }
