@@ -1,7 +1,7 @@
 package main
 
 import (
-	"awesomeProject/mlir"
+	"awesomeProject/hlir"
 	"container/list"
 	"fmt"
 	"go/ast"
@@ -34,28 +34,28 @@ func main7() {
 
 	println("----")
 
-	op2 := mlir.Operator{
+	op2 := hlir.Operator{
 		Name:        "func",
 		Dialect:     "go",
 		Blocks:      nil,
 		ReturnNames: nil,
 		Attributes:  nil,
 	}
-	label := &mlir.Label{
+	label := &hlir.Label{
 		Name:        "^bb0",
 		ParamValues: nil,
 		ParamTypes:  nil,
 	}
-	bb0 := mlir.Block{
+	bb0 := hlir.Block{
 		Label: label,
-		Items: []mlir.Operator{op2, op2},
+		Items: []hlir.Operator{op2, op2},
 	}
 
-	op := mlir.Operator{
+	op := hlir.Operator{
 		Name:        "func",
 		Dialect:     "go",
-		Blocks:      []mlir.Block{bb0},
-		ReturnNames: []mlir.ValueId{"%078"},
+		Blocks:      []hlir.Block{bb0},
+		ReturnNames: []hlir.ValueId{"%078"},
 		Attributes:  nil,
 	}
 

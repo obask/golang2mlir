@@ -1,7 +1,7 @@
 package go2ssa
 
 import (
-	"awesomeProject/mlir"
+	"awesomeProject/hlir"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -13,32 +13,32 @@ type GhostConvertor struct {
 	fset           *token.FileSet
 	name           string // Name of file.
 	astFile        *ast.File
-	Result         *mlir.Operator
+	Result         *hlir.Operator
 	pos            int
-	insertionPoint [][]mlir.Operator
+	insertionPoint [][]hlir.Operator
 }
 
-func makeGoOperator(node ast.Node) mlir.Operator {
+func makeGoOperator(node ast.Node) hlir.Operator {
 	typeName := fmt.Sprint(reflect.TypeOf(node))[5:]
-	return mlir.Operator{
+	return hlir.Operator{
 		Name:    strings.ToLower(typeName[:1]) + typeName[1:],
 		Dialect: "go",
 	}
 }
 
-func (c *GhostConvertor) processRegion(op *mlir.Operator, items []mlir.Operator) {
-	op.Blocks = append(op.Blocks, mlir.Block{Items: items})
+func (c *GhostConvertor) processRegion(op *hlir.Operator, items []hlir.Operator) {
+	op.Blocks = append(op.Blocks, hlir.Block{Items: items})
 }
 
-func (c *GhostConvertor) processOperands(m *mlir.Operator, args []ast.Expr) {
+func (c *GhostConvertor) processOperands(m *hlir.Operator, args []ast.Expr) {
 	c.insertionPoint = append(c.insertionPoint, nil)
 
 	c.insertionPoint = c.insertionPoint[:len(c.insertionPoint)-1]
 }
 
-func (c *GhostConvertor) visitFile(file *ast.File) mlir.Operator {
+func (c *GhostConvertor) visitFile(file *ast.File) hlir.Operator {
 	op := makeGoOperator(file)
-	op.Attributes["Imports"] = mlir.StringAttr(fmt.Sprintf("%v", file.Imports))
+	op.Attributes["Imports"] = hlir.StringAttr(fmt.Sprintf("%v", file.Imports))
 	c.processRegion(&op, c.visitDeclarations(file.Decls))
 	newVisitor := GhostVisitor{}
 	for _, decl := range file.Decls {
@@ -48,58 +48,58 @@ func (c *GhostConvertor) visitFile(file *ast.File) mlir.Operator {
 	return op
 }
 
-func (c *GhostConvertor) visitBadDecl(decl *ast.BadDecl) mlir.Operator {
+func (c *GhostConvertor) visitBadDecl(decl *ast.BadDecl) hlir.Operator {
 	op := makeGoOperator(decl)
 	return op
 }
 
-func (c *GhostConvertor) visitGenDecl(decl *ast.GenDecl) mlir.Operator {
+func (c *GhostConvertor) visitGenDecl(decl *ast.GenDecl) hlir.Operator {
 	op := makeGoOperator(decl)
 	return op
 }
 
-func (c *GhostConvertor) visitFuncDecl(decl *ast.FuncDecl) mlir.Operator {
+func (c *GhostConvertor) visitFuncDecl(decl *ast.FuncDecl) hlir.Operator {
 	op := makeGoOperator(decl)
-	op.Attributes["Recv"] = mlir.StringAttr(fmt.Sprintf("%v", decl.Recv))
-	op.Attributes["Name"] = mlir.StringAttr(fmt.Sprintf("%v", decl.Name))
-	op.Attributes["Type"] = mlir.StringAttr(fmt.Sprintf("%v", decl.Type))
+	op.Attributes["Recv"] = hlir.StringAttr(fmt.Sprintf("%v", decl.Recv))
+	op.Attributes["Name"] = hlir.StringAttr(fmt.Sprintf("%v", decl.Name))
+	op.Attributes["Type"] = hlir.StringAttr(fmt.Sprintf("%v", decl.Type))
 	c.processRegion(&op, c.visitStatements(decl.Body.List))
 	return op
 }
 
-func (c *GhostConvertor) visitArrayType(expr *ast.ArrayType) mlir.Operator {
+func (c *GhostConvertor) visitArrayType(expr *ast.ArrayType) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitBadExpr(expr *ast.BadExpr) mlir.Operator {
+func (c *GhostConvertor) visitBadExpr(expr *ast.BadExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitBasicLit(expr *ast.BasicLit) mlir.Operator {
+func (c *GhostConvertor) visitBasicLit(expr *ast.BasicLit) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitBinaryExpr(expr *ast.BinaryExpr) mlir.Operator {
+func (c *GhostConvertor) visitBinaryExpr(expr *ast.BinaryExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitCallExpr(expr *ast.CallExpr) mlir.Operator {
+func (c *GhostConvertor) visitCallExpr(expr *ast.CallExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	switch f := expr.Fun.(type) {
 	case *ast.Ident:
-		op.Attributes["name"] = mlir.StringAttr(f.Name)
+		op.Attributes["name"] = hlir.StringAttr(f.Name)
 	case *ast.SelectorExpr:
 		switch lhs := f.X.(type) {
 		case *ast.Ident:
-			op.Attributes["name"] = mlir.StringAttr(lhs.Name + "." + f.Sel.Name)
+			op.Attributes["name"] = hlir.StringAttr(lhs.Name + "." + f.Sel.Name)
 		default:
 			panic(lhs)
 		}
@@ -111,215 +111,215 @@ func (c *GhostConvertor) visitCallExpr(expr *ast.CallExpr) mlir.Operator {
 	return op
 }
 
-func (c *GhostConvertor) visitChanType(expr *ast.ChanType) mlir.Operator {
+func (c *GhostConvertor) visitChanType(expr *ast.ChanType) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitCompositeLit(expr *ast.CompositeLit) mlir.Operator {
+func (c *GhostConvertor) visitCompositeLit(expr *ast.CompositeLit) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitEllipsis(expr *ast.Ellipsis) mlir.Operator {
+func (c *GhostConvertor) visitEllipsis(expr *ast.Ellipsis) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitFuncLit(expr *ast.FuncLit) mlir.Operator {
+func (c *GhostConvertor) visitFuncLit(expr *ast.FuncLit) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitFuncType(expr *ast.FuncType) mlir.Operator {
+func (c *GhostConvertor) visitFuncType(expr *ast.FuncType) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitIdent(expr *ast.Ident) mlir.Operator {
+func (c *GhostConvertor) visitIdent(expr *ast.Ident) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitIndexExpr(expr *ast.IndexExpr) mlir.Operator {
+func (c *GhostConvertor) visitIndexExpr(expr *ast.IndexExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitIndexListExpr(expr *ast.IndexListExpr) mlir.Operator {
+func (c *GhostConvertor) visitIndexListExpr(expr *ast.IndexListExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitInterfaceType(expr *ast.InterfaceType) mlir.Operator {
+func (c *GhostConvertor) visitInterfaceType(expr *ast.InterfaceType) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitKeyValueExpr(expr *ast.KeyValueExpr) mlir.Operator {
+func (c *GhostConvertor) visitKeyValueExpr(expr *ast.KeyValueExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitMapType(expr *ast.MapType) mlir.Operator {
+func (c *GhostConvertor) visitMapType(expr *ast.MapType) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitParenExpr(expr *ast.ParenExpr) mlir.Operator {
+func (c *GhostConvertor) visitParenExpr(expr *ast.ParenExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitSelectorExpr(expr *ast.SelectorExpr) mlir.Operator {
+func (c *GhostConvertor) visitSelectorExpr(expr *ast.SelectorExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitSliceExpr(expr *ast.SliceExpr) mlir.Operator {
+func (c *GhostConvertor) visitSliceExpr(expr *ast.SliceExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitStarExpr(expr *ast.StarExpr) mlir.Operator {
+func (c *GhostConvertor) visitStarExpr(expr *ast.StarExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitStructType(expr *ast.StructType) mlir.Operator {
+func (c *GhostConvertor) visitStructType(expr *ast.StructType) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitTypeAssertExpr(expr *ast.TypeAssertExpr) mlir.Operator {
+func (c *GhostConvertor) visitTypeAssertExpr(expr *ast.TypeAssertExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitUnaryExpr(expr *ast.UnaryExpr) mlir.Operator {
+func (c *GhostConvertor) visitUnaryExpr(expr *ast.UnaryExpr) hlir.Operator {
 	op := makeGoOperator(expr)
 	op.SetReturnName()
 	return op
 }
 
-func (c *GhostConvertor) visitAssignStmt(stmt *ast.AssignStmt) mlir.Operator {
+func (c *GhostConvertor) visitAssignStmt(stmt *ast.AssignStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitBadStmt(stmt *ast.BadStmt) mlir.Operator {
+func (c *GhostConvertor) visitBadStmt(stmt *ast.BadStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitBlockStmt(stmt *ast.BlockStmt) mlir.Operator {
+func (c *GhostConvertor) visitBlockStmt(stmt *ast.BlockStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitBranchStmt(stmt *ast.BranchStmt) mlir.Operator {
+func (c *GhostConvertor) visitBranchStmt(stmt *ast.BranchStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitCaseClause(stmt *ast.CaseClause) mlir.Operator {
+func (c *GhostConvertor) visitCaseClause(stmt *ast.CaseClause) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitCommClause(stmt *ast.CommClause) mlir.Operator {
+func (c *GhostConvertor) visitCommClause(stmt *ast.CommClause) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitDeclStmt(stmt *ast.DeclStmt) mlir.Operator {
+func (c *GhostConvertor) visitDeclStmt(stmt *ast.DeclStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitDeferStmt(stmt *ast.DeferStmt) mlir.Operator {
+func (c *GhostConvertor) visitDeferStmt(stmt *ast.DeferStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitEmptyStmt(stmt *ast.EmptyStmt) mlir.Operator {
+func (c *GhostConvertor) visitEmptyStmt(stmt *ast.EmptyStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitExprStmt(stmt *ast.ExprStmt) mlir.Operator {
+func (c *GhostConvertor) visitExprStmt(stmt *ast.ExprStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitForStmt(stmt *ast.ForStmt) mlir.Operator {
+func (c *GhostConvertor) visitForStmt(stmt *ast.ForStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitGoStmt(stmt *ast.GoStmt) mlir.Operator {
+func (c *GhostConvertor) visitGoStmt(stmt *ast.GoStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitIfStmt(stmt *ast.IfStmt) mlir.Operator {
+func (c *GhostConvertor) visitIfStmt(stmt *ast.IfStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitIncDecStmt(stmt *ast.IncDecStmt) mlir.Operator {
+func (c *GhostConvertor) visitIncDecStmt(stmt *ast.IncDecStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitLabeledStmt(stmt *ast.LabeledStmt) mlir.Operator {
+func (c *GhostConvertor) visitLabeledStmt(stmt *ast.LabeledStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitRangeStmt(stmt *ast.RangeStmt) mlir.Operator {
+func (c *GhostConvertor) visitRangeStmt(stmt *ast.RangeStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitReturnStmt(stmt *ast.ReturnStmt) mlir.Operator {
+func (c *GhostConvertor) visitReturnStmt(stmt *ast.ReturnStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitSelectStmt(stmt *ast.SelectStmt) mlir.Operator {
+func (c *GhostConvertor) visitSelectStmt(stmt *ast.SelectStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitSendStmt(stmt *ast.SendStmt) mlir.Operator {
+func (c *GhostConvertor) visitSendStmt(stmt *ast.SendStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitSwitchStmt(stmt *ast.SwitchStmt) mlir.Operator {
+func (c *GhostConvertor) visitSwitchStmt(stmt *ast.SwitchStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }
 
-func (c *GhostConvertor) visitTypeSwitchStmt(stmt *ast.TypeSwitchStmt) mlir.Operator {
+func (c *GhostConvertor) visitTypeSwitchStmt(stmt *ast.TypeSwitchStmt) hlir.Operator {
 	op := makeGoOperator(stmt)
 	return op
 }

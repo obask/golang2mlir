@@ -64,29 +64,29 @@ func main() {
 }
 
 //return
-//op2 := mlir.Operator{
+//op2 := hlir.Operator{
 //	Name:       "func",
 //	Dialect:    "go",
 //	Blocks:    nil,
 //	ReturnNames: "",
-//	Attributes: map[string]mlir.Attribute{"dfadsfg": mlir.StringAttr("\"dsad\""), "dfadsfg2": mlir.NumberAttr(123)},
+//	Attributes: map[string]hlir.Attribute{"dfadsfg": hlir.StringAttr("\"dsad\""), "dfadsfg2": hlir.NumberAttr(123)},
 //}
-//label := &mlir.BlockLabel{
+//label := &hlir.BlockLabel{
 //	Name:        "^bb0",
 //	ParamValues: nil,
 //	ParamTypes:  nil,
 //}
-//bb0 := mlir.BasicBlock{
+//bb0 := hlir.BasicBlock{
 //	Label: label,
-//	Items: []mlir.Operator{op2, op2},
+//	Items: []hlir.Operator{op2, op2},
 //}
 //
-//op := mlir.Operator{
+//op := hlir.Operator{
 //	Name:       "func",
 //	Dialect:    "go",
-//	Blocks:    []mlir.Region{[]mlir.BasicBlock{bb0, bb0}},
+//	Blocks:    []hlir.Region{[]hlir.BasicBlock{bb0, bb0}},
 //	ReturnNames: "%078",
-//	Attributes: map[string]mlir.Attribute{"symbol_name": mlir.StringAttr("@main")},
+//	Attributes: map[string]hlir.Attribute{"symbol_name": hlir.StringAttr("@main")},
 //}
 
 func main2() {

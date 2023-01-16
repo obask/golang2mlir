@@ -1,19 +1,19 @@
 package go2ssa
 
 import (
-	"awesomeProject/mlir"
+	"awesomeProject/hlir"
 	"go/ast"
 )
 
-func (c *GhostConvertor) visitDeclarations(items []ast.Decl) []mlir.Operator {
-	var result []mlir.Operator
+func (c *GhostConvertor) visitDeclarations(items []ast.Decl) []hlir.Operator {
+	var result []hlir.Operator
 	for _, decl := range items {
 		result = append(result, c.visitDecl(decl))
 	}
 	return result
 }
 
-func (c *GhostConvertor) visitDecl(decl ast.Decl) mlir.Operator {
+func (c *GhostConvertor) visitDecl(decl ast.Decl) hlir.Operator {
 	switch node := decl.(type) {
 	case *ast.BadDecl:
 		return c.visitBadDecl(node)
@@ -26,15 +26,15 @@ func (c *GhostConvertor) visitDecl(decl ast.Decl) mlir.Operator {
 	}
 }
 
-func (c *GhostConvertor) visitExpressions(items []ast.Expr) []mlir.Operator {
-	var result []mlir.Operator
+func (c *GhostConvertor) visitExpressions(items []ast.Expr) []hlir.Operator {
+	var result []hlir.Operator
 	for _, expr := range items {
 		result = append(result, c.visitExpr(expr))
 	}
 	return result
 }
 
-func (c *GhostConvertor) visitExpr(expr ast.Expr) mlir.Operator {
+func (c *GhostConvertor) visitExpr(expr ast.Expr) hlir.Operator {
 	switch node := expr.(type) {
 	case *ast.ArrayType:
 		return c.visitArrayType(node)
@@ -87,15 +87,15 @@ func (c *GhostConvertor) visitExpr(expr ast.Expr) mlir.Operator {
 	}
 }
 
-func (c *GhostConvertor) visitStatements(items []ast.Stmt) []mlir.Operator {
-	var result []mlir.Operator
+func (c *GhostConvertor) visitStatements(items []ast.Stmt) []hlir.Operator {
+	var result []hlir.Operator
 	for _, stmt := range items {
 		result = append(result, c.visitStmt(stmt))
 	}
 	return result
 }
 
-func (c *GhostConvertor) visitStmt(stmt ast.Stmt) mlir.Operator {
+func (c *GhostConvertor) visitStmt(stmt ast.Stmt) hlir.Operator {
 	switch node := stmt.(type) {
 	case *ast.AssignStmt:
 		return c.visitAssignStmt(node)

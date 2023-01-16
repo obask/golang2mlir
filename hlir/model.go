@@ -1,4 +1,4 @@
-package mlir
+package hlir
 
 import "fmt"
 
