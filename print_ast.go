@@ -37,7 +37,7 @@ func main7() {
 	op2 := mlir.Operator{
 		Name:        "func",
 		Dialect:     "go",
-		Regions:     nil,
+		Blocks:      nil,
 		ReturnNames: nil,
 		Attributes:  nil,
 	}
@@ -46,7 +46,7 @@ func main7() {
 		ParamValues: nil,
 		ParamTypes:  nil,
 	}
-	bb0 := mlir.Region{
+	bb0 := mlir.Block{
 		Label: label,
 		Items: []mlir.Operator{op2, op2},
 	}
@@ -54,7 +54,7 @@ func main7() {
 	op := mlir.Operator{
 		Name:        "func",
 		Dialect:     "go",
-		Regions:     []mlir.Region{bb0},
+		Blocks:      []mlir.Block{bb0},
 		ReturnNames: []mlir.ValueId{"%078"},
 		Attributes:  nil,
 	}

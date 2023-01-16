@@ -17,19 +17,19 @@ func mapSlice[T any, M any](a []T, f func(T) M) []M {
 func (op *Operator) RenderTo(w io.Writer, indent string) {
 	_, _ = fmt.Fprint(w, indent)
 	if op.ReturnNames != nil {
-		returnNames := mapSlice(op.ReturnNames, func(t ValueId) string { return string(t) })
-		_, _ = fmt.Fprintf(w, "%s = ", strings.Join(returnNames, ", "))
+		tmp := mapSlice(op.ReturnNames, func(t ValueId) string { return string(t) })
+		_, _ = fmt.Fprintf(w, "%s = ", strings.Join(tmp, ", "))
 	}
 	_, _ = fmt.Fprintf(w, "\"%s.%s\"", op.Dialect, op.Name)
-	operands := mapSlice(op.Operands, func(t ValueId) string { return string(t) })
+	operands := mapSlice(op.Arguments, func(t ValueId) string { return string(t) })
 	joined := strings.Join(operands, ", ")
 	_, _ = fmt.Fprintf(w, "(%s) ", joined)
-	renderRegions(op.Regions, w, indent)
+	renderRegions(op.Blocks, w, indent)
 	op.Attributes.RenderTo(w, indent)
 	_, _ = fmt.Fprintf(w, ": () -> ()\n")
 }
 
-func renderRegions(regions []Region, w io.Writer, indent string) {
+func renderRegions(regions []Block, w io.Writer, indent string) {
 	if regions == nil {
 		return
 	}
@@ -53,7 +53,7 @@ func (l Label) RenderTo(w io.Writer, indent string) {
 	_, _ = fmt.Fprintf(w, "%s):\n", joined)
 }
 
-func (region Region) RenderTo(w io.Writer, indent string) {
+func (region Block) RenderTo(w io.Writer, indent string) {
 	_, _ = fmt.Fprint(w, "{\n")
 	if region.Label != nil {
 		region.Label.RenderTo(w, indent)

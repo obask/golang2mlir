@@ -67,8 +67,8 @@ func main() {
 //op2 := mlir.Operator{
 //	Name:       "func",
 //	Dialect:    "go",
-//	Regions:    nil,
-//	ReturnName: "",
+//	Blocks:    nil,
+//	ReturnNames: "",
 //	Attributes: map[string]mlir.Attribute{"dfadsfg": mlir.StringAttr("\"dsad\""), "dfadsfg2": mlir.NumberAttr(123)},
 //}
 //label := &mlir.BlockLabel{
@@ -84,8 +84,8 @@ func main() {
 //op := mlir.Operator{
 //	Name:       "func",
 //	Dialect:    "go",
-//	Regions:    []mlir.Region{[]mlir.BasicBlock{bb0, bb0}},
-//	ReturnName: "%078",
+//	Blocks:    []mlir.Region{[]mlir.BasicBlock{bb0, bb0}},
+//	ReturnNames: "%078",
 //	Attributes: map[string]mlir.Attribute{"symbol_name": mlir.StringAttr("@main")},
 //}
 

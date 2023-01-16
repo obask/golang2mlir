@@ -3,26 +3,26 @@ package mlir
 import "fmt"
 
 type Operator struct {
-	Name         string
-	Dialect      string
-	Operands     []ValueId
-	OperandTypes []SimpleType
-	Regions      []Region
-	ReturnNames  []ValueId
-	ReturnTypes  []SimpleType
-	Attributes   AttributesMap
+	ReturnNames   []ValueId
+	Dialect       string
+	Name          string
+	Blocks        []Block
+	Arguments     []ValueId
+	Attributes    AttributesMap
+	ArgumentTypes []SimpleType
+	ReturnTypes   []SimpleType
 }
 
 func (op *Operator) SetReturnName() {
 	sprintf := fmt.Sprintf("%p", op)
 	if op.ReturnNames == nil {
-		op.ReturnNames = []ValueId{ValueId("%" + sprintf[len(sprintf)-3:])}
+		op.ReturnNames = append(op.ReturnNames, ValueId("%" + sprintf[len(sprintf)-3:]))
 	}
 }
 
 type AttributesMap map[string]Attribute
 
-type Region struct {
+type Block struct {
 	Label *Label
 	Items []Operator
 }

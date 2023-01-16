@@ -27,7 +27,7 @@ func makeGoOperator(node ast.Node) mlir.Operator {
 }
 
 func (c *GhostConvertor) processRegion(op *mlir.Operator, items []mlir.Operator) {
-	op.Regions = append(op.Regions, mlir.Region{Items: items})
+	op.Blocks = append(op.Blocks, mlir.Block{Items: items})
 }
 
 func (c *GhostConvertor) processOperands(m *mlir.Operator, args []ast.Expr) {

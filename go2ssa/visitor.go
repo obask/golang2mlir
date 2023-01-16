@@ -28,8 +28,8 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 	op := &mlir.Operator{
 		Name:        strings.ToLower(typeName[:1]) + typeName[1:],
 		Dialect:     "go",
-		Operands:    nil,
-		Regions:     nil,
+		Arguments:    nil,
+		Blocks:      nil,
 		ReturnNames: nil,
 		Attributes:  map[string]mlir.Attribute{},
 	}
@@ -48,7 +48,7 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 		for _, decl := range n.Decls {
 			ast.Walk(&newVisitor, decl)
 		}
-		op.Regions = []mlir.Region{{Items: newVisitor.insertionPoint}}
+		op.Blocks = []mlir.Block{{Items: newVisitor.insertionPoint}}
 		v.Result = op
 		//op.Attributes["Decls"] = mlir.StringAttr(fmt.Sprintf("%v", n.Decls))
 		v.insertionPoint = append(v.insertionPoint, *op)
@@ -64,7 +64,7 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 		op.Attributes["Type"] = mlir.StringAttr(fmt.Sprintf("%v", n.Type))
 		newVisitor := GhostVisitor{}
 		ast.Walk(&newVisitor, n.Body)
-		op.Regions = []mlir.Region{{Items: newVisitor.insertionPoint}}
+		op.Blocks = []mlir.Block{{Items: newVisitor.insertionPoint}}
 		v.insertionPoint = append(v.insertionPoint, *op)
 		return nil
 	case *ast.BlockStmt:
@@ -133,16 +133,16 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 		//		Body *BlockStmt
 		newVisitor := GhostVisitor{}
 		ast.Walk(&newVisitor, n.Init)
-		op.Regions = append(op.Regions, mlir.Region{Items: newVisitor.insertionPoint})
+		op.Blocks = append(op.Blocks, mlir.Block{Items: newVisitor.insertionPoint})
 		newVisitor = GhostVisitor{}
 		ast.Walk(&newVisitor, n.Cond)
-		op.Regions = append(op.Regions, mlir.Region{Items: newVisitor.insertionPoint})
+		op.Blocks = append(op.Blocks, mlir.Block{Items: newVisitor.insertionPoint})
 		newVisitor = GhostVisitor{}
 		ast.Walk(&newVisitor, n.Post)
-		op.Regions = append(op.Regions, mlir.Region{Items: newVisitor.insertionPoint})
+		op.Blocks = append(op.Blocks, mlir.Block{Items: newVisitor.insertionPoint})
 		newVisitor = GhostVisitor{}
 		ast.Walk(&newVisitor, n.Body)
-		op.Regions = append(op.Regions, mlir.Region{Items: newVisitor.insertionPoint})
+		op.Blocks = append(op.Blocks, mlir.Block{Items: newVisitor.insertionPoint})
 		v.insertionPoint = append(v.insertionPoint, *op)
 		return nil
 	case *ast.BinaryExpr:
@@ -180,6 +180,6 @@ func (v *GhostVisitor) processOperands(op *mlir.Operator, expressions []ast.Expr
 	}
 	v.insertionPoint = append(v.insertionPoint, newVisitor.insertionPoint...)
 	for _, operand := range newVisitor.insertionPoint {
-		op.Operands = append(op.Operands, operand.ReturnNames[0])
+		op.Arguments = append(op.Arguments, operand.ReturnNames...)
 	}
 }
