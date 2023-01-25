@@ -2,7 +2,8 @@ package go2ssa
 
 import (
 	"awesomeProject/dialects/arith"
-	"awesomeProject/hlir"
+	"awesomeProject/dialects/fn"
+	"awesomeProject/ir"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -10,14 +11,14 @@ import (
 	"strconv"
 	"strings"
 )
-=
+
 type GhostVisitor struct {
-	fset           *token.FileSet
-	name           string // Name of file.
-	astFile        *ast.File
-	Result         *hlir.Operator
-	pos            int
-	insertionPoint []hlir.Operator
+	fset         *token.FileSet
+	name         string // Name of file.
+	astFile      *ast.File
+	Result       *ir.Operator
+	pos          int
+	currentBlock []ir.Operator
 }
 
 // Visit implements the ast.Visitor interface.
@@ -26,13 +27,13 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 		return nil
 	}
 	typeName := fmt.Sprint(reflect.TypeOf(node))[5:]
-	op := &hlir.Operator{
+	op := &ir.Operator{
 		Name:        strings.ToLower(typeName[:1]) + typeName[1:],
 		Dialect:     "go",
 		Arguments:   nil,
 		Blocks:      nil,
 		ReturnNames: nil,
-		Attributes:  map[string]hlir.Attribute{},
+		Attributes:  map[string]ir.Attribute{},
 	}
 	switch n := node.(type) {
 	case *ast.File:
@@ -44,29 +45,33 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 		//	Imports    []*ImportSpec   // imports in this file
 		//	Unresolved []*Ident        // unresolved identifiers in this file
 		//	Comments   []*CommentGroup // list of all comments in the source file
-		op.Attributes["Imports"] = hlir.StringAttr(fmt.Sprintf("%v", n.Imports))
+		op.Attr("Imports", fmt.Sprintf("%v", n.Imports))
 		newVisitor := GhostVisitor{}
 		for _, decl := range n.Decls {
 			ast.Walk(&newVisitor, decl)
 		}
-		op.Blocks = []hlir.Block{{Items: newVisitor.insertionPoint}}
+		op.Blocks = []ir.Block{{Items: newVisitor.currentBlock}}
 		v.Result = op
-		//op.Attributes["Decls"] = hlir.StringAttr(fmt.Sprintf("%v", n.Decls))
-		v.insertionPoint = append(v.insertionPoint, *op)
+		//op.Attr("Decls", fmt.Sprintf("%v", n.Decls))
+		v.PushBack(op)
 		return nil
 	case *ast.FuncDecl:
 		//		Doc  *CommentGroup // associated documentation; or nil
 		//		Recv *FieldList    // receiver (methods); or nil (functions)
 		//		Name *Ident        // function/method name
-		//		Type *FuncType     // function signature: type and value parameters, results, and position of "func" keyword
+		//		Type *FuncType     // function signature: type and value parameters, results, and position of "fn" keyword
 		//		Body *BlockStmt    // function body; or nil for external (non-Go) function
-		op.Attributes["Recv"] = hlir.StringAttr(fmt.Sprintf("%v", n.Recv))
-		op.Attributes["Name"] = hlir.StringAttr(fmt.Sprintf("%v", n.Name))
-		op.Attributes["Type"] = hlir.StringAttr(fmt.Sprintf("%v", n.Type))
-		newVisitor := GhostVisitor{}
-		ast.Walk(&newVisitor, n.Body)
-		op.Blocks = []hlir.Block{{Items: newVisitor.insertionPoint}}
-		v.insertionPoint = append(v.insertionPoint, *op)
+		op.T = ir.FuncFunc
+		// TODO: add block arguments
+		op.Attr("Recv", fmt.Sprintf("%v", n.Recv))
+		op.Attributes["sym_name"] = ir.ReferenceAttr(fmt.Sprintf("%v", n.Name))
+		op.Attr("Type", fmt.Sprintf("%v", n.Type))
+		processRegion(op, n.Body)
+
+		//newVisitor := GhostVisitor{}
+		//ast.Walk(&newVisitor, n.Body)
+		//op.Blocks = []ir.Block{{Items: newVisitor.currentBlock}}
+		v.PushBack(op)
 		return nil
 	case *ast.BlockStmt:
 		//		List   []Stmt
@@ -79,11 +84,12 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 		//		Args     []Expr    // function arguments; or nil
 		switch f := n.Fun.(type) {
 		case *ast.Ident:
-			op.Attributes["name"] = hlir.StringAttr(f.Name)
+			op.Attr("name", f.Name)
 		case *ast.SelectorExpr:
 			switch lhs := f.X.(type) {
 			case *ast.Ident:
-				op.Attributes["name"] = hlir.StringAttr(lhs.Name + "." + f.Sel.Name)
+				op = fn.MakeCallOp()
+				op.Attributes["callee"] = ir.ReferenceAttr(lhs.Name + "." + f.Sel.Name)
 			default:
 				panic(lhs)
 			}
@@ -99,22 +105,22 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 		case token.INT:
 			op = arith.MakeConstant()
 			ii, _ := strconv.Atoi(n.Value)
-			op.Attributes["value"] = hlir.NumberAttr(ii)
-			op.ReturnNames = []hlir.ValueId{hlir.ValueId("%c_" + n.Value)}
-			op.ReturnTypes = []hlir.SimpleType{"i32"}
+			op.Attributes["value"] = ir.NumberAttr(ii)
+			op.ReturnNames = []ir.SimpleName{ir.SimpleName("%c_" + n.Value)}
+			op.ReturnTypes = []ir.SimpleType{"i32"}
 			break
 		default:
-			op.Attributes["kind"] = hlir.StringAttr(n.Kind.String())
-			op.Attributes["value"] = hlir.StringAttr(n.Value)
+			op.Attr("kind", n.Kind.String())
+			op.Attr("value", n.Value)
 		}
-		op.Attributes["kind"] = hlir.StringAttr(n.Kind.String())
-		op.Attributes["value"] = hlir.StringAttr(n.Value)
+		op.Attr("kind", n.Kind.String())
+		op.Attr("value", n.Value)
 	case *ast.GenDecl:
 		//		Tok    token.Token   // IMPORT, CONST, TYPE, or VAR
 		//		Specs  []Spec
-		op.Attributes["tok"] = hlir.StringAttr(n.Tok.String())
-		op.Attributes["specs"] = hlir.StringAttr(fmt.Sprintf("%v", n.Specs))
-		v.insertionPoint = append(v.insertionPoint, *op)
+		op.Attr("tok", n.Tok.String())
+		op.Attr("specs", fmt.Sprintf("%v", n.Specs))
+		v.PushBack(op)
 		return nil
 	case *ast.AssignStmt:
 		//		Lhs    []Expr
@@ -122,64 +128,94 @@ func (v *GhostVisitor) Visit(node ast.Node) ast.Visitor {
 		//		Rhs    []Expr
 		switch lhs := n.Lhs[0].(type) {
 		case *ast.Ident:
-			op.Attributes["var"] = hlir.StringAttr(lhs.Name)
+			op.ReturnNames = append(op.ReturnNames, ir.SimpleName(lhs.Name))
+			op.ReturnTypes = append(op.ReturnTypes, "interface{}")
+			//op.Attr("var", lhs.Name)
 		default:
 			panic(lhs)
 		}
-		op.Attributes["tok"] = hlir.StringAttr(n.Tok.String())
+		op.Attr("tok", n.Tok.String())
 		v.processOperands(op, n.Rhs)
 	case *ast.ForStmt:
 		//		Init Stmt      // initialization statement; or nil
 		//		Cond Expr      // condition; or nil
 		//		Post Stmt      // post iteration statement; or nil
 		//		Body *BlockStmt
-		processRegion(n.Init, op)
-		processRegion(n.Cond, op)
-		processRegion(n.Post, op)
-		processRegion(n.Body, op)
-		v.insertionPoint = append(v.insertionPoint, *op)
+		processRegion(op, n.Init)
+		processRegion(op, n.Cond)
+		processRegion(op, n.Post)
+		processRegion(op, n.Body)
+		v.PushBack(op)
 		return nil
 	case *ast.BinaryExpr:
 		//		X     Expr        // left operand
 		//		Op    token.Token // operator
 		//		Y     Expr        // right operand
-		op.Attributes["op"] = hlir.StringAttr(n.Op.String())
+		op.Attr("op", n.Op.String())
 		v.processOperands(op, []ast.Expr{n.X, n.Y})
 	case *ast.Ident:
 		//		Name    string    // identifier name
 		//		Obj     *Object   // denoted object; or nil
-		op.Attributes["name"] = hlir.StringAttr(n.Name)
+		op.Attr("value", "%"+n.Name)
+		op.Dialect = "mlir"
+		op.Name = "load"
 	case *ast.SelectorExpr:
 		//		X   Expr   // expression
 		//		Sel *Ident // field selector
 		v.processOperands(op, []ast.Expr{n.X})
-		op.Attributes["sel"] = hlir.StringAttr(n.Sel.String())
+		op.Attr("sel", n.Sel.String())
 
-		println()
+		//println()
+	case *ast.IfStmt:
+		//		Init Stmt      // initialization statement; or nil
+		//		Cond Expr      // condition
+		//		Body *BlockStmt
+		//		Else Stmt // else branch; or nil
+		op.T = ir.ScfIf
+		if n.Init != nil {
+			panic("Init Stmt      // initialization statement; or nil")
+		}
+		v.processOperands(op, []ast.Expr{n.Cond})
+		processRegion(op, n.Body)
+		op.Blocks[0].Items = append(op.Blocks[0].Items, ir.Operator{T: ir.ScfYield})
+		if n.Else != nil {
+			processRegion(op, n.Else)
+			op.Blocks[1].Items = append(op.Blocks[1].Items, ir.Operator{T: ir.ScfYield})
+		}
+		v.PushBack(op)
+		return nil
 	default:
 		println("not found ->")
 		fmt.Printf("case %T:\n", node)
 		return nil
 	}
 	op.SetReturnName()
-	v.insertionPoint = append(v.insertionPoint, *op)
+	v.PushBack(op)
 	return nil
 }
 
-func processRegion(stmt ast.Node, op *hlir.Operator) {
+func processRegion(op *ir.Operator, stmt ast.Node) {
 	newVisitor := GhostVisitor{}
 	ast.Walk(&newVisitor, stmt)
-	op.Blocks = append(op.Blocks, hlir.Block{Items: newVisitor.insertionPoint})
+	op.Blocks = append(op.Blocks, ir.Block{Items: newVisitor.currentBlock})
 }
 
-func (v *GhostVisitor) processOperands(op *hlir.Operator, expressions []ast.Expr) {
-	newVisitor := &GhostVisitor{}
+func (v *GhostVisitor) processOperands(op *ir.Operator, expressions []ast.Expr) {
+	var newArguments []ir.ValueId
 	for _, arg := range expressions {
-		//fmt.Printf("%+v\n", arg)
-		ast.Walk(newVisitor, arg)
+		ast.Walk(v, arg)
+		newArguments = append(newArguments, ir.SsaValue{Ref: &v.currentBlock[len(v.currentBlock)-1]})
 	}
-	v.insertionPoint = append(v.insertionPoint, newVisitor.insertionPoint...)
-	for _, operand := range newVisitor.insertionPoint {
-		op.Arguments = append(op.Arguments, operand.ReturnNames...)
-	}
+	//if len(newVisitor.currentBlock) != len(expressions) {
+	//	panic("len(newVisitor.currentBlock) != len(expressions)")
+	//}
+	//tmp := ir.MapSlice(newArguments, func(o ir.Operator) ir.ValueId {
+	//	//v.PushBack(&o)
+	//	return ir.SsaValue{Ref: &o}
+	//})
+	op.Arguments = append(op.Arguments, newArguments...)
+}
+
+func (v *GhostVisitor) PushBack(operator *ir.Operator) {
+	v.currentBlock = append(v.currentBlock, *operator)
 }

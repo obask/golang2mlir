@@ -56,37 +56,40 @@ func main() {
 
 	//fmt.Printf("%+v\n", g.Result)
 	println("render:")
-	g.Result.RenderTo(os.Stdout, "")
+	for _, operator := range g.Result.Blocks[0].Items {
+		operator.RenderTo(os.Stdout, "")
+		println()
+	}
 
-	Fprint(os.Stdout, fset, code, GoydaFilter)
+	//Fprint(os.Stdout, fset, code, GoydaFilter)
 
 	return
 }
 
 //return
-//op2 := hlir.Operator{
-//	Name:       "func",
+//op2 := ir.Operator{
+//	Name:       "fn",
 //	Dialect:    "go",
 //	Blocks:    nil,
 //	ReturnNames: "",
-//	Attributes: map[string]hlir.Attribute{"dfadsfg": hlir.StringAttr("\"dsad\""), "dfadsfg2": hlir.NumberAttr(123)},
+//	Attributes: map[string]ir.Attribute{"dfadsfg": ir.StringAttr("\"dsad\""), "dfadsfg2": ir.NumberAttr(123)},
 //}
-//label := &hlir.BlockLabel{
+//label := &ir.BlockLabel{
 //	Name:        "^bb0",
 //	ParamValues: nil,
 //	ParamTypes:  nil,
 //}
-//bb0 := hlir.BasicBlock{
+//bb0 := ir.BasicBlock{
 //	Label: label,
-//	Items: []hlir.Operator{op2, op2},
+//	Items: []ir.Operator{op2, op2},
 //}
 //
-//op := hlir.Operator{
-//	Name:       "func",
+//op := ir.Operator{
+//	Name:       "fn",
 //	Dialect:    "go",
-//	Blocks:    []hlir.Region{[]hlir.BasicBlock{bb0, bb0}},
+//	Blocks:    []ir.Region{[]ir.BasicBlock{bb0, bb0}},
 //	ReturnNames: "%078",
-//	Attributes: map[string]hlir.Attribute{"symbol_name": hlir.StringAttr("@main")},
+//	Attributes: map[string]ir.Attribute{"symbol_name": ir.StringAttr("@main")},
 //}
 
 func main2() {

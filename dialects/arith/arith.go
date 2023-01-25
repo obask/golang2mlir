@@ -1,16 +1,16 @@
 package arith
 
 import (
-	"awesomeProject/hlir"
+	"awesomeProject/ir"
 )
 
-func MakeConstant() *hlir.Operator {
-	return &hlir.Operator{
+func MakeConstant() *ir.Operator {
+	return &ir.Operator{
 		Dialect:     "arith",
 		Name:        "constant",
 		Arguments:   nil,
 		Blocks:      nil,
 		ReturnNames: nil,
-		Attributes:  map[string]hlir.Attribute{},
+		Attributes:  map[string]ir.Attribute{},
 	}
 }

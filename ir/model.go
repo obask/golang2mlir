@@ -1,9 +1,24 @@
-package hlir
+package ir
 
 import "fmt"
 
+type OpType string
+
+const (
+	ArithConstant OpType = "arith.constant"
+	BuiltinCast          = "func.call"
+	FuncCall             = "func.call"
+	FuncFunc             = "func.func"
+	FuncConstant         = "func.constant"
+	ScfIf                = "scf.if"
+	ScfWhile             = "scf.while"
+	ScfYield             = "scf.yield"
+	GenericUast          = "uast.*"
+)
+
 type Operator struct {
-	ReturnNames   []ValueId
+	T             OpType
+	ReturnNames   []SimpleName
 	Dialect       string
 	Name          string
 	Blocks        []Block
@@ -16,8 +31,12 @@ type Operator struct {
 func (op *Operator) SetReturnName() {
 	sprintf := fmt.Sprintf("%p", op)
 	if op.ReturnNames == nil {
-		op.ReturnNames = append(op.ReturnNames, ValueId("%" + sprintf[len(sprintf)-3:]))
+		op.ReturnNames = append(op.ReturnNames, SimpleName(sprintf[len(sprintf)-3:]))
 	}
+}
+
+func (op *Operator) Attr(field string, value string) {
+	op.Attributes[field] = StringAttr(value)
 }
 
 type AttributesMap map[string]Attribute
@@ -35,11 +54,11 @@ type Label struct {
 
 type BlockId string
 
-type ValueId string
-
 type Attribute interface {
 	attributeImpl()
 }
+
+type SimpleName string
 
 type SimpleType string
 
@@ -58,3 +77,7 @@ func (s NumberAttr) attributeImpl() {}
 type StringAttr string
 
 func (s StringAttr) attributeImpl() {}
+
+type ReferenceAttr string
+
+func (s ReferenceAttr) attributeImpl() {}
